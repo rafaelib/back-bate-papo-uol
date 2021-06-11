@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { stripHtml } from "string-strip-html";
 import dayjs from "dayjs";
 
 const app = express();
@@ -42,7 +43,7 @@ app.post("/participants", (req, res) => {
   participants.push(participant);
 
   const newParticipantMessage = {
-    from: name,
+    from: stripHtml(name).result.trim(),
     to: "Todos",
     text: "entra na sala...",
     type: "status",
@@ -55,7 +56,6 @@ app.post("/participants", (req, res) => {
 
 app.get("/participants", (req, res) => {
   // GET PARTICIPANTS
-  const participants = req.body;
   res.send(participants);
 });
 
@@ -77,7 +77,6 @@ app.post("/messages", (req, res) => {
   newMessage.time = dayjs(Date.now()).format("HH:mm:ss");
   messages.push(newMessage);
   res.sendStatus(200);
-  console.log(participants);
 });
 
 app.get("/messages", (req, res) => {
@@ -91,10 +90,21 @@ app.get("/messages", (req, res) => {
   if (req.query.limit === undefined) {
     res.send(messagesToDisplay);
   } else {
-    messagesToDisplay.reverse();
-    messagesToDisplay.splice(50, Number.MAX_VALUE);
-    messagesToDisplay.reverse();
+    messagesToDisplay.splice(0, messagesToDisplay.length - 1 - req.query.limit);
     res.send(messagesToDisplay);
   }
 });
+
+app.post("/status", (req, res) => {
+  const user = participants.findIndex(
+    (participant) => req.headers.user === participant.name
+  );
+  if (user === -1) {
+    res.sendStatus(400);
+  } else {
+    participants[user].lastStatus = Date.now();
+    res.sendStatus(200);
+  }
+});
+
 app.listen(4000, () => console.log("iniciando o server..."));
