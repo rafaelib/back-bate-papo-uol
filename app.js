@@ -61,8 +61,12 @@ app.get("/participants", (req, res) => {
 
 app.post("/messages", (req, res) => {
   const newMessage = req.body;
-  const { to, text, type } = newMessage;
-  const from = req.headers.user;
+  let { to, text, type } = newMessage;
+  to = stripHtml(to).result.trim();
+  text = stripHtml(text).result.trim();
+  type = stripHtml(type).result.trim();
+
+  const from = (to = stripHtml(req.headers.user).result.trim());
   const typeValidation = type === "message" || type === "private_message";
   if (
     to.length === 0 ||
